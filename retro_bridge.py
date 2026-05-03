@@ -3,13 +3,18 @@ import websockets
 import json
 import threading
 import socket
+import os
+import sys
+import subprocess
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Importamos vgamepad para emular el control de Xbox 360
+# Intentamos importar las librerías críticas
 try:
     import vgamepad as vg
+    import qrcode
 except ImportError:
-    print("Error: Falta la librería vgamepad. Instálala ejecutando: pip install vgamepad")
+    print("Error: Faltan librerías. Si eres desarrollador ejecuta: pip install vgamepad qrcode websockets")
+    input("Presiona ENTER para salir...")
     exit()
 
 # ==============================================================================
@@ -28,23 +33,27 @@ HTML_PAGE = """
         .status { padding: 10px 20px; border-radius: 50px; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         .disconnected { background: #7f1d1d; color: #fca5a5; }
         .connected { background: #14532d; color: #86efac; }
-        .gamepads-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; width: 100%; max-height: 60vh; overflow-y: auto; }
+        .btn-fs { margin-top: 15px; padding: 10px 20px; background: #0284c7; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .btn-fs:active { background: #0369a1; transform: translateY(2px); }
+        .gamepads-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; width: 100%; max-height: 50vh; overflow-y: auto; }
         .gamepad-box { padding: 15px; border: 2px dashed #38bdf8; border-radius: 15px; min-width: 250px; background: #1e293b; }
         .gamepad-box h3 { margin: 0 0 10px 0; color: #f8fafc; font-size: 1.1rem; }
-        .hint { color: #94a3b8; font-size: 0.9rem; margin-top: auto; margin-bottom: 20px; }
+        .hint { color: #94a3b8; font-size: 0.9rem; margin-top: auto; margin-bottom: 20px; padding: 0 20px; }
     </style>
 </head>
 <body>
-    <h1>🎮 RetroBridge Múltiple</h1>
-    <p>Soporte para múltiples mandos y jugadores</p>
+    <h1>🎮 RetroBridge</h1>
+    <p>Receptor de Baja Latencia</p>
     
     <div id="statusIndicator" class="status disconnected">Buscando PC...</div>
     
+    <button class="btn-fs" onclick="toggleFullScreen()">📺 Pantalla Completa</button>
+    
     <div id="gamepadsContainer" class="gamepads-container">
-        <p>Empareja uno o más mandos de PS4 por Bluetooth y pulsa un botón.</p>
+        <p>Empareja uno o más mandos Bluetooth y pulsa un botón.</p>
     </div>
 
-    <p class="hint">Mantén la pantalla encendida mientras juegas.</p>
+    <p class="hint">Mantén la pantalla encendida mientras juegas y evita bloquear el teléfono.</p>
 
     <script>
         let ws;
@@ -52,6 +61,18 @@ HTML_PAGE = """
         const wsUrl = "ws://WS_HOST_IP:8765";
         const statusEl = document.getElementById('statusIndicator');
         const containerEl = document.getElementById('gamepadsContainer');
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error intentando entrar en pantalla completa: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
 
         function connect() {
             ws = new WebSocket(wsUrl);
@@ -127,13 +148,12 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        # Inyectamos la IP actual en el código Javascript
         host = self.headers.get('Host').split(':')[0]
         html = HTML_PAGE.replace('WS_HOST_IP', host)
         self.wfile.write(html.encode('utf-8'))
         
     def log_message(self, format, *args):
-        pass # Silenciar logs HTTP
+        pass
 
 def run_http_server(ip, port):
     server = HTTPServer(('0.0.0.0', port), AppHandler)
@@ -148,13 +168,11 @@ async def ws_handler(websocket):
     try:
         async for message in websocket:
             data = json.loads(message)
-            # Ahora recibimos una lista de mandos desde el navegador
             for gp_data in data:
                 process_inputs(websocket, gp_data)
     except websockets.exceptions.ConnectionClosed:
         print(f"[-] Dispositivo desconectado (IP: {websocket.remote_address[0]}).")
     finally:
-        # Al desconectar, se eliminan los mandos virtuales asociados a esta conexión
         if websocket in connected_clients:
             del connected_clients[websocket]
 
@@ -164,7 +182,6 @@ def process_inputs(ws, gp_data):
     
     if gp_id not in connected_clients[ws]:
         try:
-            # CAMBIO AQUI: Ahora creamos un mando virtual de PS4 (VDS4Gamepad)
             connected_clients[ws][gp_id] = vg.VDS4Gamepad()
             print(f"[🎮] Nuevo mando detectado! Asignado al Jugador {len(connected_clients[ws])}")
         except Exception as e:
@@ -177,9 +194,7 @@ def process_inputs(ws, gp_data):
     
     def is_pressed(val): return float(val) > 0.5
 
-    # ================= MAPEADO DE BOTONES ESTÁNDAR HTML5 A DUALSHOCK 4 =================
     if len(buttons) >= 16:
-        # Botones Principales (X, Círculo, Cuadrado, Triángulo)
         if is_pressed(buttons[0]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_CROSS)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_CROSS)
 
@@ -192,32 +207,27 @@ def process_inputs(ws, gp_data):
         if is_pressed(buttons[3]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_TRIANGLE)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_TRIANGLE)
 
-        # Hombros (L1 / R1)
         if is_pressed(buttons[4]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_SHOULDER_LEFT)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_SHOULDER_LEFT)
 
         if is_pressed(buttons[5]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_SHOULDER_RIGHT)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_SHOULDER_RIGHT)
 
-        # Gatillos Analógicos (L2 / R2)
         gamepad.left_trigger_float(value_float=float(buttons[6]))
         gamepad.right_trigger_float(value_float=float(buttons[7]))
 
-        # Share y Options
         if is_pressed(buttons[8]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_SHARE)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_SHARE)
 
         if is_pressed(buttons[9]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_OPTIONS)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_OPTIONS)
 
-        # Click Joysticks (L3 / R3)
         if is_pressed(buttons[10]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_THUMB_LEFT)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_THUMB_LEFT)
 
         if is_pressed(buttons[11]): gamepad.press_button(button=vg.DS4_BUTTONS.DS4_BUTTON_THUMB_RIGHT)
         else: gamepad.release_button(button=vg.DS4_BUTTONS.DS4_BUTTON_THUMB_RIGHT)
 
-        # D-PAD (Cruceta - En DualShock 4 el driver lo maneja como un "POV Hat" direccional)
         up = is_pressed(buttons[12])
         down = is_pressed(buttons[13])
         left = is_pressed(buttons[14])
@@ -235,53 +245,84 @@ def process_inputs(ws, gp_data):
         
         gamepad.directional_pad(direction=dpad_val)
         
-        # Botón PS (Guía)
         if len(buttons) > 16:
             if is_pressed(buttons[16]): gamepad.press_special_button(special_button=vg.DS4_SPECIAL_BUTTONS.DS4_SPECIAL_BUTTON_PS)
             else: gamepad.release_special_button(special_button=vg.DS4_SPECIAL_BUTTONS.DS4_SPECIAL_BUTTON_PS)
 
-    # ================= MAPEADO DE EJES (JOYSTICKS) =================
     if len(axes) >= 4:
-        # En PS4, los ejes X e Y flotantes funcionan igual
         gamepad.left_joystick_float(x_value_float=float(axes[0]), y_value_float=-float(axes[1]))
         gamepad.right_joystick_float(x_value_float=float(axes[2]), y_value_float=-float(axes[3]))
 
-    # Enviar el estado final al driver del sistema operativo
     gamepad.update()
 
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 async def main():
+    os.system('cls' if os.name == 'nt' else 'clear')
     print("===================================================")
-    print("        INICIANDO RETROBRIDGE MULTIJUGADOR         ")
+    print("          🎮 RETROBRIDGE MULTIJUGADOR 🎮          ")
     print("===================================================")
     
+    # 1. Verificación e Instalación Automática del Driver
     try:
-        # CAMBIO AQUI: Verificamos creación de mando PS4
         _test_gamepad = vg.VDS4Gamepad()
         del _test_gamepad
-        print("[OK] Driver ViGEmBus detectado. Mando virtual PS4 funcionando.")
+        print("[OK] Driver detectado. Mando virtual listo.")
     except Exception as e:
-        print(f"\n[ERROR] No se pudo conectar al driver: {e}")
-        print("----> DEBES INSTALAR EL DRIVER: ViGEmBus")
-        print("----> Descárgalo desde: https://github.com/nefarius/ViGEmBus/releases")
+        print(f"\n[AVISO] No se detectó el driver necesario en esta PC.")
+        print("Buscando el instalador incluido...")
+        installer_path = get_resource_path("ViGEmBus_Setup.exe")
+        
+        if os.path.exists(installer_path):
+            print("\n[!] Iniciando instalación automática de ViGEmBus...")
+            print("[!] Por favor, acepta los permisos de instalación (Siguiente > Siguiente).")
+            try:
+                subprocess.run([installer_path], check=True)
+                print("\n[+] Instalación completada con éxito.")
+                print("[!] IMPORTANTE: Por favor, CIERRA ESTA VENTANA Y VUELVE A ABRIRLA.")
+            except Exception as inst_e:
+                print(f"\n[-] La instalación fue cancelada o falló: {inst_e}")
+        else:
+            print("----> NO SE ENCONTRÓ EL INSTALADOR EMPAQUETADO.")
+            print("----> Descárgalo desde: https://github.com/nefarius/ViGEmBus/releases")
+        
+        input("\nPresiona ENTER para salir...")
         return
 
+    # 2. Configuración de Red
     local_ip = get_local_ip()
     http_port = 8080
     ws_port = 8765
+    url = f"http://{local_ip}:{http_port}"
 
-    # Lanzamos el servidor web en un hilo secundario
+    # 3. Mostrar Código QR
+    print("\n" + "="*50)
+    print(" 📱 ¡CONEXIÓN RÁPIDA DETECTADA!")
+    print(" Apunta la cámara de tu celular a este código:")
+    print("="*50 + "\n")
+
+    try:
+        # Generamos el QR para la terminal
+        qr = qrcode.QRCode(version=1, box_size=1, border=2)
+        qr.add_data(url)
+        qr.make(fit=True)
+        # invert=True suele verse mejor en las consolas negras de Windows
+        qr.print_ascii(invert=True) 
+    except Exception as e:
+        print("[!] No se pudo generar el código QR visual.")
+
+    print(f"\n 🌐 O entra manualmente en el navegador a: \n    {url}")
+    print("="*50 + "\n")
+
+    # 4. Iniciar Servidores
     threading.Thread(target=run_http_server, args=(local_ip, http_port), daemon=True).start()
+    print(f"[*] Esperando conexiones... (Puedes minimizar esta ventana)")
 
-    print("\n---------------------------------------------------")
-    print(" ✅ LISTO! Pasos para conectar:")
-    print("  1. Activa el Anclaje de Red USB en tu teléfono.")
-    print("  2. Conecta el mando PS4 por Bluetooth al móvil.")
-    print(f"  3. Abre Chrome en tu teléfono y entra a:")
-    print(f"     ➡️ http://{local_ip}:{http_port} ⬅️")
-    print("---------------------------------------------------\n")
-    print(f"Escuchando conexión websocket en ws://{local_ip}:{ws_port} ...")
-
-    # Mantenemos el servidor WebSocket corriendo de forma asíncrona
     async with websockets.serve(ws_handler, "0.0.0.0", ws_port):
         await asyncio.Future()
 
@@ -289,4 +330,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\nSaliendo y apagando mando virtual...")
+        print("\nSaliendo y apagando mandos virtuales...")
