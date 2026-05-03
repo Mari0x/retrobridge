@@ -16,12 +16,7 @@ Características
 
 🎮 Emulación Pura (DualShock 4): RetroBridge crea mandos virtuales a nivel de sistema operativo utilizando ViGEmBus.
 
-Visuals
-
-
-(Reemplaza esta imagen subiendo una captura de la interfaz de tu teléfono y la consola de la PC a tu repositorio usando una ruta relativa, ej: docs/screenshot.png)
-
-Instalación
+Instalación:
 
 Para Usuarios (Método Recomendado)
 
@@ -33,32 +28,9 @@ Descarga el archivo retro_bridge.exe más reciente.
 
 Ejecuta el archivo en tu PC.
 
-[!NOTE]
-
 Solo la primera vez que lo abras, si no tienes el driver de mandos virtuales en tu PC, el programa iniciará automáticamente el instalador de ViGEmBus.
 
-Para Desarrolladores (Desde el Código Fuente)
-
-Si deseas compilar la herramienta por ti mismo o modificar el código fuente:
-
-Clona este repositorio:
-
-git clone [https://github.com/TuUsuario/RetroBridge.git](https://github.com/TuUsuario/RetroBridge.git)
-
-
-Instala las dependencias:
-
-pip install -r requirements.txt
-
-
-Descarga el instalador de ViGEmBus desde su repositorio oficial, renómbralo a ViGEmBus_Setup.exe y colócalo en la raíz del proyecto.
-
-Compila usando PyInstaller:
-
-pyinstaller --onefile --add-data "ViGEmBus_Setup.exe;." --collect-all vgamepad retro_bridge.py
-
-
-Uso
+Uso:
 
 Haz doble clic en retro_bridge.exe en tu PC.
 
@@ -76,31 +48,10 @@ Si encuentras algún error o tienes problemas para conectar tus mandos, por favo
 
 Roadmap
 
-[ ] Añadir soporte para emular mandos de Xbox 360 (XInput) seleccionable desde la interfaz web.
-
-[ ] Mejorar la interfaz web (UI) añadiendo indicadores visuales de los botones presionados.
-
 [ ] Investigar la migración a VHF (Virtual HID Framework) para hacer el sistema a prueba de Anti-Cheats en juegos modernos.
 
 [ ] Añadir soporte para vibración (Rumble) enviando la señal de vuelta al navegador.
 
-Contribuciones
-
-¡Las contribuciones son bienvenidas! Para cambios importantes, por favor abre un issue primero para discutir lo que te gustaría cambiar.
-
-Haz un Fork del proyecto.
-
-Crea tu rama de características (git checkout -b feature/NuevaCaracteristica).
-
-Haz commit de tus cambios (git commit -m 'Añade una nueva característica').
-
-Haz push a la rama (git push origin feature/NuevaCaracteristica).
-
-Abre un Pull Request.
-
-Autores y Agradecimientos
-
-[Tu Nombre / Tu Usuario de GitHub] - Desarrollo inicial y arquitectura.
 
 Un agradecimiento gigantesco a Nefarius por el desarrollo y mantenimiento de la librería ViGEmBus, sin la cual este proyecto requeriría escribir un driver desde cero.
 
