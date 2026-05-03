@@ -1,0 +1,7 @@
+Lista de dependencias para RetroBridge
+
+Instalar usando: pip install -r requirements.txt
+
+websockets==12.0
+vgamepad==0.1.0
+qrcode==7.4.2
