@@ -4,6 +4,8 @@ Convierte cualquier teléfono celular en un receptor de mandos inalámbricos de 
 
 RetroBridge es una herramienta de código abierto diseñada para la comunidad de emulación (RetroBat, RetroArch, etc.). Soluciona el problema común del input lag o las desconexiones que ocurren al conectar mandos directamente al Bluetooth de la PC. Utiliza tu teléfono móvil como un "puente" de alta velocidad, enviando las señales de los mandos hacia la PC a través de un cable USB (Anclaje de red) o Wi-Fi local.
 
+<img width="538" height="590" alt="{5370EDEB-B268-47CE-8042-49AB7842A8AA}" src="https://github.com/user-attachments/assets/46ecb375-b41d-45cd-b1d1-8a4ded0961d2" />
+
 Características
 
 ⚡ Cero Latencia (Modo Cable): Usa "Anclaje de red USB" en Android para lograr un tiempo de respuesta de < 1 ms.
