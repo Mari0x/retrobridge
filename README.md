@@ -1,4 +1,53 @@
-🎮 RetroBridgeConvierte cualquier teléfono en un receptor de mandos inalámbricos de ultra-baja latencia para tu PC.RetroBridge es una herramienta de código abierto diseñada para la comunidad de emulación (RetroBat, RetroArch, etc.). Soluciona el problema común del input lag o las desconexiones que ocurren al conectar mandos directamente al Bluetooth de la PC.En su lugar, utiliza tu teléfono móvil como un "puente" de alta velocidad, enviando las señales de los mandos hacia la PC a través de un cable USB (Anclaje de red) o Wi-Fi local.✨ Características Principales⚡ Cero Latencia (Modo Cable): Usa "Anclaje de red USB" en Android para lograr un tiempo de respuesta de < 1 ms. Ideal para juegos retro competitivos.🛜 Modo Inalámbrico: Funciona perfectamente a través de tu red Wi-Fi local.🚫 Sin Instalaciones en el Móvil: No requiere descargar ninguna APK sospechosa ni apps con publicidad. Funciona nativamente a través de una Web App local (HTML5 Gamepad API) desde tu navegador (Chrome/Safari).👥 Multijugador Real: Soporta la conexión de múltiples mandos simultáneos a un solo teléfono, o conectar varios teléfonos a la vez. Cada mando detectado creará de forma dinámica un mando virtual independiente en Windows.🎮 Emulación Pura (DualShock 4): RetroBridge crea mandos virtuales a nivel de sistema operativo utilizando la arquitectura ViGEmBus. Tu PC y tus emuladores creerán que tienes un mando original de PS4 conectado por USB (conservando los íconos originales en pantalla).✅ Universal: Compatible con mandos de Xbox, PS4, PS5 y genéricos (8BitDo, Ipega, etc.) emparejados a tu teléfono.🚀 Guía de Uso Rápido (Para Usuarios)Si solo quieres jugar, sigue estos pasos:Ve a la pestaña de [Releases] y descarga el último archivo .exe.Haz doble clic en retro_bridge.exe en tu PC.Nota: La primera vez que lo abras, instalará automáticamente el driver necesario (ViGEmBus) si no lo tienes.Conecta tu mando (PS4, Xbox, etc.) por Bluetooth a tu teléfono celular.Conecta tu celular a la PC con un cable USB y activa el "Anclaje de red USB" (o asegúrate de que ambos estén en la misma red Wi-Fi).En tu teléfono, abre el navegador web y entra a la dirección IP que te muestra la consola negra en la PC (Ej: http://192.168.1.50:8080).¡Listo! Presiona un botón en el mando y tu PC lo detectará instantáneamente.💻 Guía de Compilación (Para Desarrolladores)Si deseas compilar la herramienta por ti mismo o modificar el código fuente:Requisitos previos:Python 3.8 o superior.El instalador de ViGEmBus descargado (renombrado a ViGEmBus_Setup.exe y ubicado en la misma carpeta que el script). Descargar ViGEmBus aquí.Instalación de dependencias:Ejecuta el siguiente comando en tu terminal para instalar las librerías necesarias:pip install -r requirements.txt
-Ejecutar desde código fuente:python retro_bridge.py
-Compilar a .exe (usando PyInstaller):Para generar un único ejecutable que contenga Python, el servidor y el driver integrado:pyinstaller --onefile --add-data "ViGEmBus_Setup.exe;." --collect-all vgamepad retro_bridge.py
-El archivo resultante se encontrará en la carpeta dist.🏗️ ¿Cómo funciona internamente?Python Server: Inicia un servidor web HTTP mínimo y un servidor WebSockets asíncrono.Web Client: El servidor HTTP entrega una interfaz HTML/JS al teléfono. El código Javascript usa la navigator.getGamepads() API para capturar el estado físico del mando a 60 FPS.El Puente: Los cambios de estado (joysticks, botones) se serializan en un formato JSON muy ligero y se disparan por el WebSocket hacia la PC.Traducción al OS: Python recibe el JSON y utiliza el driver de Windows (ViGEmBus a través de vgamepad) para inyectar estas pulsaciones directamente a nivel del Kernel, emulando un Virtual DualShock 4 Controller.⚖️ Licencia y AgradecimientosEl código de este repositorio está libre para su uso y modificación.Un agradecimiento especial a Nefarius por el desarrollo de la librería ViGEmBus.Gracias a la comunidad de r/Roms y RetroBat por la inspiración.
+🎮 RetroBridge
+Convierte cualquier teléfono en un receptor de mandos inalámbricos de ultra-baja latencia para tu PC.
+RetroBridge es una herramienta de código abierto diseñada para la comunidad de emulación (RetroBat, RetroArch, etc.). Soluciona el problema común del input lag o las desconexiones que ocurren al conectar mandos directamente al Bluetooth de la PC.
+En su lugar, utiliza tu teléfono móvil como un "puente" de alta velocidad, enviando las señales de los mandos hacia la PC a través de un cable USB (anclaje de red) o Wi-Fi local.
+✨ Características Principales
+⚡ Cero Latencia (Modo Cable): Usa "Anclaje de red USB" en Android para lograr un tiempo de respuesta de < 1 ms. Ideal para juegos retro competitivos.
+🛜 Modo Inalámbrico: Funciona perfectamente a través de tu red Wi-Fi local.
+🚫 Sin Instalaciones en el Móvil: No requiere descargar ninguna APK sospechosa ni apps con publicidad. Funciona nativamente a través de una Web App local (HTML5 Gamepad API) desde tu navegador (Chrome/Safari).
+👥 Multijugador Real: Soporta la conexión de múltiples mandos simultáneos a un solo teléfono, o conectar varios teléfonos a la vez. Cada mando detectado creará de forma dinámica un mando virtual independiente en Windows.
+🎮 Emulación Pura (DualShock 4): RetroBridge crea mandos virtuales a nivel de sistema operativo utilizando la arquitectura ViGEmBus. Tu PC y tus emuladores creerán que tienes un mando original de PS4 conectado por USB (conservando los íconos originales en pantalla).
+✅ Universal: Compatible con mandos de Xbox, PS4, PS5 y genéricos (8BitDo, Ipega, etc.) emparejados a tu teléfono.
+🚀 Guía de Uso Rápido (Para Usuarios)
+Si solo quieres jugar, sigue estos pasos:
+Ve a la pestaña de
+y descarga el último archivo .exe.
+Haz doble clic en retro_bridge.exe en tu PC.
+Nota: La primera vez que lo abras, instalará automáticamente el driver necesario (ViGEmBus) si no lo tienes.
+Conecta tu mando (PS4, Xbox, etc.) por Bluetooth a tu teléfono celular.
+Conecta tu celular a la PC con un cable USB y activa el "Anclaje de red USB" (o asegúrate de que ambos estén en la misma red Wi-Fi).
+En tu teléfono, abre el navegador web y entra a la dirección IP que te muestra la consola negra en la PC (Ej: http://192.168.1.50:8080).
+¡Listo! Presiona un botón en el mando y tu PC lo detectará instantáneamente.
+💻 Guía de Compilación (Para Desarrolladores)
+Si deseas compilar la herramienta por ti mismo o modificar el código fuente:
+Requisitos previos:
+Python 3.8 o superior.
+El instalador de ViGEmBus descargado (renombrado a ViGEmBus_Setup.exe y ubicado en la misma carpeta que el script). Descargar ViGEmBus aquí.
+Instalación de dependencias:
+Ejecuta el siguiente comando en tu terminal para instalar las librerías necesarias:
+pip install -r requirements.txt
+
+
+
+Ejecutar desde código fuente:
+python retro_bridge.py
+
+
+
+Compilar a .exe (usando PyInstaller):
+Para generar un único ejecutable que contenga Python, el servidor y el driver integrado:
+pyinstaller --onefile --add-data "ViGEmBus_Setup.exe;." --collect-all vgamepad retro_bridge.py
+
+
+
+El archivo resultante se encontrará en la carpeta dist.
+🏗️ ¿Cómo funciona internamente?
+Python Server: Inicia un servidor web HTTP mínimo y un servidor WebSockets asíncrono.
+Web Client: El servidor HTTP entrega una interfaz HTML/JS al teléfono. El código Javascript usa la navigator.getGamepads() API para capturar el estado físico del mando a 60 FPS.
+El Puente: Los cambios de estado (joysticks, botones) se serializan en un formato JSON muy ligero y se disparan por el WebSocket hacia la PC.
+Traducción al OS: Python recibe el JSON y utiliza el driver de Windows (ViGEmBus a través de vgamepad) para inyectar estas pulsaciones directamente a nivel del Kernel, emulando un Virtual DualShock 4 Controller.
+⚖️ Licencia y Agradecimientos
+Este proyecto está distribuido bajo la Licencia MIT. Eres libre de usar, modificar y distribuir el código, pero se entrega sin ninguna garantía. Consulta el archivo LICENSE en el repositorio para más detalles.
+Un agradecimiento especial a Nefarius por el desarrollo de la librería ViGEmBus.
+Gracias a la comunidad de r/Roms y RetroBat por la inspiración.
